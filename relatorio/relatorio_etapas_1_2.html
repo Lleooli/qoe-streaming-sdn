@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Projeto Final — Programabilidade de Redes — Etapas 1 e 2</title>
+<style>
+  @page { size: A4; margin: 2.2cm 2cm; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 11.5pt;
+         line-height: 1.45; color: #1a1a1a; max-width: 17cm; margin: 0 auto; }
+  h1 { font-size: 17pt; text-align: center; margin-bottom: 0.2em; }
+  h2 { font-size: 13.5pt; border-bottom: 1px solid #999; padding-bottom: 2px;
+       margin-top: 1.6em; }
+  h3 { font-size: 12pt; margin-top: 1.2em; }
+  .subtitulo { text-align: center; font-size: 12.5pt; margin-top: 0; }
+  .meta { text-align: center; margin: 1.2em 0 0.4em 0; }
+  .repo { text-align: center; margin-bottom: 1.5em; }
+  table { border-collapse: collapse; margin: 0.8em auto; font-size: 10pt;
+          font-family: Arial, sans-serif; }
+  th, td { border: 1px solid #888; padding: 4px 8px; text-align: center; }
+  th { background: #efefef; }
+  td.esq, th.esq { text-align: left; }
+  pre { background: #f5f5f5; border: 1px solid #ddd; padding: 8px 10px;
+        font-size: 9pt; overflow-x: hidden; white-space: pre-wrap; }
+  code { font-family: Consolas, monospace; font-size: 9.5pt; background: #f5f5f5; }
+  figure { text-align: center; margin: 1em 0; page-break-inside: avoid; }
+  img { max-width: 100%; }
+  figcaption { font-size: 9.5pt; color: #444; margin-top: 4px; }
+  .duascol { display: flex; gap: 8px; justify-content: center; }
+  .duascol figure { flex: 1; margin: 0.5em 0; }
+  .quebra { page-break-before: always; }
+  a { color: #0b4f8a; }
+</style>
+</head>
+<body>
+
+<h1>Melhoria da QoE em Streaming de Vídeo com Mininet e SDN</h1>
+<p class="subtitulo">Projeto Final de Programabilidade de Redes — Etapas 1 e 2</p>
+<p class="meta">Leonardo Oliveira<br>Junho de 2026</p>
+<p class="repo">Repositório com código e instruções de reprodução:<br>
+<a href="https://github.com/Lleooli/qoe-streaming-sdn">https://github.com/Lleooli/qoe-streaming-sdn</a></p>
+
+<h2>1. Introdução</h2>
+<p>Este relatório cobre as duas primeiras etapas do projeto: a construção do
+ambiente experimental de streaming de vídeo sobre rede emulada (Etapa 1) e a
+indução controlada de degradação com caracterização do seu efeito na
+Qualidade de Experiência (Etapa 2). O ambiente servirá de base para o
+mecanismo de detecção e mitigação via SDN previsto na Etapa 3.</p>
+
+<h2>2. Etapa 1 — Construção do Ambiente Experimental</h2>
+
+<h3>2.1 Ferramentas</h3>
+<table>
+<tr><th class="esq">Componente</th><th class="esq">Escolha</th><th class="esq">Justificativa</th></tr>
+<tr><td class="esq">Emulador</td><td class="esq">Mininet 2.3 + Open vSwitch (Ubuntu 24.04/WSL2)</td><td class="esq">requisito do projeto</td></tr>
+<tr><td class="esq">Controlador SDN</td><td class="esq">os-ken 2.8.1 (OpenFlow 1.3)</td><td class="esq">fork mantido do Ryu, com a mesma API; o Ryu original não executa em Python ≥ 3.10</td></tr>
+<tr><td class="esq">Streaming</td><td class="esq">MPEG-DASH (ffmpeg) + servidor HTTP em Python</td><td class="esq">mesmo pipeline do trabalho de sala (DASH + VLC)</td></tr>
+<tr><td class="esq">Cliente</td><td class="esq">cliente DASH próprio em Python, com ABR</td><td class="esq">o VLC não expõe métricas de QoE de forma programática; o cliente próprio registra startup, stalls, bitrate e trocas em JSON</td></tr>
+<tr><td class="esq">Métricas de rede</td><td class="esq">ping e iperf3</td><td class="esq">requisito do projeto</td></tr>
+<tr><td class="esq">Automação</td><td class="esq">Makefile + API Python do Mininet</td><td class="esq">execução reproduzível com um comando</td></tr>
+</table>
+
+<h3>2.2 Topologia</h3>
+<pre>
+   srv ──┐                       ┌── c1
+          ├── s1 ═══════════ s2 ─┼── c2
+   txg ──┘     (gargalo 10M)     ├── c3
+                                 └── rxg
+</pre>
+<table>
+<tr><th>Nó</th><th>IP</th><th class="esq">Papel</th></tr>
+<tr><td>srv</td><td>10.0.0.1</td><td class="esq">servidor DASH (HTTP, porta 8080)</td></tr>
+<tr><td>txg</td><td>10.0.0.2</td><td class="esq">gerador de tráfego concorrente (iperf3)</td></tr>
+<tr><td>c1–c3</td><td>10.0.0.11–13</td><td class="esq">clientes de vídeo instrumentados</td></tr>
+<tr><td>rxg</td><td>10.0.0.14</td><td class="esq">receptor do tráfego concorrente</td></tr>
+<tr><td>s1, s2</td><td>—</td><td class="esq">switches OpenFlow 1.3 com controlador remoto</td></tr>
+</table>
+<p>Os links de borda têm 100 Mbps; o link s1↔s2 é o gargalo de 10 Mbps, onde
+a degradação é induzida. O vídeo (60 s, conteúdo real) é codificado em três
+representações — 426×240 a 300 kbps, 640×360 a 800 kbps e 1280×720 a
+2400 kbps — com segmentos de 2 s. No pior caso os três clientes consomem
+7,2 Mbps, abaixo do gargalo, de modo que o baseline comporta todos na
+qualidade máxima.</p>
+<p>O controlador implementa um learning switch L2 com regras reativas por
+(porta de entrada, MAC de destino) e coleta estatísticas das portas a cada
+5 s — telemetria que alimentará a lógica de detecção da Etapa 3.</p>
+
+<h3>2.3 Medições iniciais (sem degradação)</h3>
+<table>
+<tr><th class="esq">Métrica de rede</th><th>Valor</th></tr>
+<tr><td class="esq">pingAll (conectividade)</td><td>0% de perda (30/30)</td></tr>
+<tr><td class="esq">RTT pré-streaming c1→srv</td><td>0,097 ms</td></tr>
+<tr><td class="esq">Capacidade TCP (iperf3, 5 s)</td><td>9,64 Mbps</td></tr>
+<tr><td class="esq">RTT durante o streaming</td><td>21,5 ms</td></tr>
+<tr><td class="esq">Perda ICMP durante o streaming</td><td>0%</td></tr>
+</table>
+<table>
+<tr><th>Cliente</th><th>Startup (s)</th><th>Stalls</th><th>Bitrate médio (kbps)</th><th>Trocas</th><th>Segmentos</th></tr>
+<tr><td>c1</td><td>0,264</td><td>0</td><td>2330</td><td>1</td><td>30/30</td></tr>
+<tr><td>c2</td><td>0,197</td><td>0</td><td>2330</td><td>1</td><td>30/30</td></tr>
+<tr><td>c3</td><td>0,232</td><td>0</td><td>2063</td><td>3</td><td>30/30</td></tr>
+</table>
+<p>O streaming é estável: nenhum rebuffering, startup abaixo de 0,3 s e os
+três clientes convergindo para 720p (o bitrate médio fica pouco abaixo de
+2400 kbps apenas porque o primeiro segmento é baixado em 240p, por
+conservadorismo do algoritmo adaptativo). O critério da etapa — medições
+iniciais sem degradação significativa — foi atendido.</p>
+
+<h2 class="quebra">3. Etapa 2 — Indução de Degradação e Caracterização da QoE</h2>
+
+<h3>3.1 Cenários</h3>
+<p>Quatro cenários adversos foram aplicados ao gargalo s1↔s2 por meio de
+disciplinas de fila do <code>tc</code> (htb/netem) e geração de tráfego com
+iperf3, mantendo o restante do ambiente idêntico ao baseline:</p>
+<table>
+<tr><th class="esq">Cenário</th><th class="esq">Indução</th><th class="esq">Parâmetros</th></tr>
+<tr><td class="esq">baseline</td><td class="esq">—</td><td class="esq">gargalo de 10 Mbps</td></tr>
+<tr><td class="esq">banda</td><td class="esq">tc/htb</td><td class="esq">gargalo reduzido a 3 Mbps</td></tr>
+<tr><td class="esq">atraso</td><td class="esq">tc/netem</td><td class="esq">50 ms ± 20 ms por sentido (RTT ≈ 100 ms)</td></tr>
+<tr><td class="esq">perda</td><td class="esq">tc/netem</td><td class="esq">3% de perda de pacotes</td></tr>
+<tr><td class="esq">concorrente</td><td class="esq">iperf3</td><td class="esq">fluxo UDP de 8 Mbps (txg→rxg) no gargalo</td></tr>
+</table>
+
+<h3>3.2 Métricas de QoE e justificativa</h3>
+<p><b>Tempo de início (startup)</b>: primeira impressão do usuário; sensível
+ao RTT, pois o cliente paga vários tempos de ida e volta (conexão TCP,
+manifesto, inicialização, primeiro segmento) antes de exibir o primeiro
+quadro. <b>Stalls</b> (número e duração): a métrica de maior impacto
+percebido — a reprodução congela quando o buffer esvazia. <b>Bitrate médio
+reproduzido</b>: qualidade visual efetivamente entregue, resposta direta do
+ABR à banda disponível. <b>Trocas de qualidade</b>: oscilações frequentes
+incomodam mesmo sem congelamento, e indicam instabilidade na estimativa de
+banda. Do lado da rede, RTT, perda e vazão TCP foram medidos antes e durante
+cada sessão para permitir a correlação causa–efeito.</p>
+
+<h3>3.3 Resultados (média dos três clientes)</h3>
+<table>
+<tr><th class="esq">cenário</th><th>startup (s)</th><th>stalls</th><th>t. parado (s)</th><th>bitrate (kbps)</th><th>trocas</th><th>RTT durante (ms)</th><th>perda ICMP (%)</th><th>iperf3 (Mbps)</th></tr>
+<tr><td class="esq">baseline</td><td>0,23</td><td>0</td><td>0</td><td><b>2241</b></td><td>1,7</td><td>21,5</td><td>0</td><td>9,64</td></tr>
+<tr><td class="esq">banda</td><td>0,53</td><td>0</td><td>0</td><td><b>611</b></td><td>2,0</td><td>131,4</td><td>0</td><td><b>2,71</b></td></tr>
+<tr><td class="esq">atraso</td><td><b>1,29</b></td><td>0</td><td>0</td><td>783</td><td>1,0</td><td>109,1</td><td>0</td><td>9,02</td></tr>
+<tr><td class="esq">perda</td><td>0,19</td><td>0</td><td>0</td><td>1698</td><td><b>4,0</b></td><td>22,3</td><td><b>2,06</b></td><td>9,44</td></tr>
+<tr><td class="esq">concorrente</td><td>0,54</td><td><b>0,33</b></td><td><b>0,30</b></td><td><b>436</b></td><td>3,0</td><td>57,1</td><td>0</td><td>9,44</td></tr>
+</table>
+
+<figure>
+<img src="../results/plots/bitrate_timeline.png" alt="bitrate ao longo do tempo">
+<figcaption>Figura 1 — Adaptação de bitrate ao longo do tempo (cliente c1, todos os cenários).</figcaption>
+</figure>
+<div class="duascol">
+<figure><img src="../results/plots/qoe_bitrate.png" alt="bitrate médio">
+<figcaption>Figura 2 — Bitrate médio reproduzido.</figcaption></figure>
+<figure><img src="../results/plots/qoe_startup.png" alt="startup">
+<figcaption>Figura 3 — Tempo de início.</figcaption></figure>
+</div>
+<div class="duascol">
+<figure><img src="../results/plots/qoe_stalls.png" alt="rebuffering">
+<figcaption>Figura 4 — Tempo total de rebuffering.</figcaption></figure>
+<figure><img src="../results/plots/qoe_switches.png" alt="trocas">
+<figcaption>Figura 5 — Trocas de qualidade (ABR).</figcaption></figure>
+</div>
+<div class="duascol">
+<figure><img src="../results/plots/net_rtt.png" alt="RTT">
+<figcaption>Figura 6 — RTT médio durante o streaming.</figcaption></figure>
+<figure><img src="../results/plots/net_throughput.png" alt="capacidade">
+<figcaption>Figura 7 — Capacidade TCP medida (iperf3).</figcaption></figure>
+</div>
+
+<h3 class="quebra">3.4 Análise — relação entre métricas de rede e QoE</h3>
+<p>Todos os cenários adversos degradaram ao menos uma métrica de QoE em
+relação ao baseline, com assinaturas distintas:</p>
+<p><b>Banda (3 Mbps).</b> A capacidade medida caiu para 2,7 Mbps; divididos
+entre três clientes, restam cerca de 0,9 Mbps por sessão, e o ABR estabiliza
+entre 300 e 800 kbps (média de 611 kbps, queda de 73%). O RTT durante o
+streaming sobe para 131 ms por efeito de fila no gargalo. Não há stalls: o
+algoritmo adaptativo sacrifica qualidade para proteger o buffer, que é o
+comportamento esperado do DASH.</p>
+<p><b>Atraso (RTT ≈ 100 ms).</b> A capacidade fica quase intacta (9 Mbps),
+mas o startup quintuplica (0,23 s → 1,29 s), já que cada etapa inicial paga
+o RTT cheio. O bitrate médio também cai (783 kbps): com segmentos de apenas
+2 s, o tempo ocioso de requisição reduz o throughput percebido pelo
+estimador — limitação conhecida de ABR baseado em throughput sob RTT alto.</p>
+<p><b>Perda (3%).</b> O TCP retransmite e a vazão por segmento fica
+errática. O resultado não é queda uniforme, e sim instabilidade: média de 4
+trocas de qualidade por cliente (um deles fez 7), com bitrate médio 24%
+menor. A perda ICMP medida durante a sessão foi de 2,06%, coerente com os 3%
+nominais.</p>
+<p><b>Concorrente (UDP 8 Mbps).</b> Pior caso global. O fluxo UDP não tem
+controle de congestionamento e ocupa cerca de 80% do gargalo; sobram
+~2 Mbps para os três clientes. O bitrate médio despenca para 436 kbps
+(−81%) e surge o único episódio de rebuffering do experimento (1 stall de
+0,9 s). O RTT quase triplica pela fila permanentemente ocupada.</p>
+<table>
+<tr><th class="esq">Métrica de rede degradada</th><th class="esq">Efeito dominante na QoE</th></tr>
+<tr><td class="esq">↓ banda disponível</td><td class="esq">↓ bitrate; risco de stall quando a vazão fica abaixo do bitrate mínimo</td></tr>
+<tr><td class="esq">↑ RTT</td><td class="esq">↑ startup; ↓ bitrate (estimador de throughput penalizado)</td></tr>
+<tr><td class="esq">↑ perda</td><td class="esq">↑ trocas de qualidade (instabilidade); ↓ bitrate</td></tr>
+<tr><td class="esq">tráfego concorrente UDP</td><td class="esq">combinação: ↓ bitrate, ↑ RTT e stalls</td></tr>
+</table>
+<p>Para a Etapa 3, o cenário concorrente é o alvo natural da mitigação: é o
+de pior QoE e o mais tratável por regras OpenFlow (priorização do tráfego de
+vídeo ou limitação do fluxo concorrente), usando a telemetria de portas que
+o controlador já coleta.</p>
+
+<h2>4. Estrutura do repositório</h2>
+<pre>
+qoe-streaming-sdn/
+├── Makefile                      automação (setup, video, baseline, cenarios, plots)
+├── README.md                     visão geral e instruções
+├── controller/
+│   └── qoe_controller.py         controlador SDN (os-ken, OF 1.3 + telemetria)
+├── topology/
+│   └── qoe_topo.py               topologia para uso interativo (mn --custom)
+├── video/
+│   └── generate_video.sh         codificação DASH (3 qualidades, segmentos de 2 s)
+├── streaming/
+│   ├── dash_server.py            servidor HTTP do conteúdo
+│   └── dash_client.py            cliente DASH com ABR e métricas de QoE
+├── scripts/
+│   ├── check_env.sh              verificação do ambiente
+│   ├── run_experiment.py         orquestrador dos cenários (API do Mininet)
+│   ├── run_all.sh                executa todos os cenários adversos
+│   └── plot_results.py           gráficos e tabela consolidada
+├── results/
+│   ├── &lt;cenário&gt;/                qoe_c*.json, ping, iperf por cenário
+│   └── plots/                    figuras e summary.csv
+└── relatorio/                    relatórios das etapas (markdown e PDF)
+</pre>
+
+<h2>5. Reprodução</h2>
+<pre>
+git clone https://github.com/Lleooli/qoe-streaming-sdn
+cd qoe-streaming-sdn
+sudo make setup     # instala mininet, openvswitch, iperf3, ffmpeg, os-ken
+make video          # gera o conteúdo DASH a partir de um vídeo fonte
+sudo make baseline  # Etapa 1
+sudo make cenarios  # Etapa 2 (banda, atraso, perda, concorrente)
+make plots          # figuras em results/plots/
+</pre>
+<p>Ambiente testado: Ubuntu 24.04 (WSL2), Python 3.12, Mininet 2.3,
+Open vSwitch 3.3, os-ken 2.8.1, ffmpeg 6.1, iperf3 3.16.</p>
+
+</body>
+</html>
