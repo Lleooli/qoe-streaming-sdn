@@ -1,0 +1,24 @@
+{
+ "scenario": "atraso",
+ "params": {
+  "bw": 10,
+  "delay": "50ms",
+  "jitter": "20ms"
+ },
+ "pre": {
+  "loss_pct": 0.0,
+  "rtt_ms": {
+   "min": 91.281,
+   "avg": 100.763,
+   "max": 115.331,
+   "mdev": 7.777
+  },
+  "throughput_mbps": 9.016
+ },
+ "during": {
+  "rtt_avg_ms": 109.09,
+  "rtt_max_ms": 228.0,
+  "ping_loss_pct": 0.0,
+  "samples": 99
+ }
+}

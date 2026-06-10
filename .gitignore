@@ -1,0 +1,22 @@
+# conteudo DASH gerado (reproduzir com: make video)
+video/dash/
+
+# videos fonte
+*.mp4
+*.mkv
+
+# capturas de trafego
+*.pcap
+*.pcapng
+
+# python
+__pycache__/
+*.pyc
+
+# logs soltos
+*.log
+
+# arquivos temporarios
+*.tmp
+*.bak
+.claude/

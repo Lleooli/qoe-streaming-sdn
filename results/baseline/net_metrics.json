@@ -1,0 +1,22 @@
+{
+ "scenario": "baseline",
+ "params": {
+  "bw": 10
+ },
+ "pre": {
+  "loss_pct": 0.0,
+  "rtt_ms": {
+   "min": 0.07,
+   "avg": 0.097,
+   "max": 0.122,
+   "mdev": 0.018
+  },
+  "throughput_mbps": 9.641
+ },
+ "during": {
+  "rtt_avg_ms": 21.49,
+  "rtt_max_ms": 91.7,
+  "ping_loss_pct": 0.0,
+  "samples": 97
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "scenario": "concorrente",
+ "params": {
+  "bw": 10,
+  "cross": "8M"
+ },
+ "pre": {
+  "loss_pct": 0.0,
+  "rtt_ms": {
+   "min": 0.053,
+   "avg": 0.095,
+   "max": 0.184,
+   "mdev": 0.045
+  },
+  "throughput_mbps": 9.435
+ },
+ "during": {
+  "rtt_avg_ms": 57.12,
+  "rtt_max_ms": 157.0,
+  "ping_loss_pct": 0.0,
+  "samples": 101
+ }
+}

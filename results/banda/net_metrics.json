@@ -1,0 +1,22 @@
+{
+ "scenario": "banda",
+ "params": {
+  "bw": 3
+ },
+ "pre": {
+  "loss_pct": 0.0,
+  "rtt_ms": {
+   "min": 0.072,
+   "avg": 0.102,
+   "max": 0.165,
+   "mdev": 0.029
+  },
+  "throughput_mbps": 2.713
+ },
+ "during": {
+  "rtt_avg_ms": 131.36,
+  "rtt_max_ms": 558.0,
+  "ping_loss_pct": 0.0,
+  "samples": 98
+ }
+}
