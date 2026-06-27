@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Projeto Final — Programabilidade de Redes — Etapa 3</title>
+<style>
+  @page { size: A4; margin: 2.2cm 2cm; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 11.5pt;
+         line-height: 1.45; color: #1a1a1a; max-width: 17cm; margin: 0 auto; }
+  h1 { font-size: 17pt; text-align: center; margin-bottom: 0.2em; }
+  h2 { font-size: 13.5pt; border-bottom: 1px solid #999; padding-bottom: 2px;
+       margin-top: 1.6em; }
+  h3 { font-size: 12pt; margin-top: 1.2em; }
+  .subtitulo { text-align: center; font-size: 12.5pt; margin-top: 0; }
+  .meta { text-align: center; margin: 1.2em 0 0.4em 0; }
+  .repo { text-align: center; margin-bottom: 1.5em; }
+  table { border-collapse: collapse; margin: 0.8em auto; font-size: 10pt;
+          font-family: Arial, sans-serif; }
+  th, td { border: 1px solid #888; padding: 4px 8px; text-align: center; }
+  th { background: #efefef; }
+  td.esq, th.esq { text-align: left; }
+  pre { background: #f5f5f5; border: 1px solid #ddd; padding: 8px 10px;
+        font-size: 9pt; overflow-x: hidden; white-space: pre-wrap; }
+  code { font-family: Consolas, monospace; font-size: 9.5pt; background: #f5f5f5; }
+  figure { text-align: center; margin: 1em 0; page-break-inside: avoid; }
+  img { max-width: 100%; }
+  figcaption { font-size: 9.5pt; color: #444; margin-top: 4px; }
+  .quebra { page-break-before: always; }
+  a { color: #0b4f8a; }
+</style>
+</head>
+<body>
+
+<h1>Melhoria da QoE em Streaming de Vídeo com Mininet e SDN</h1>
+<p class="subtitulo">Projeto Final de Programabilidade de Redes — Etapa 3: Controle via SDN</p>
+<p class="meta">Leonardo Oliveira<br>Junho de 2026</p>
+<p class="repo">Repositório com código e instruções de reprodução:<br>
+<a href="https://github.com/Lleooli/qoe-streaming-sdn">https://github.com/Lleooli/qoe-streaming-sdn</a></p>
+
+<h2>1. Objetivo</h2>
+<p>A Etapa 3 implementa o mecanismo de rede programável previsto no projeto:
+<b>detectar a degradação de QoE em tempo de execução no controlador SDN e
+mitigá-la programando regras OpenFlow dinamicamente</b>. O alvo é o cenário
+<i>concorrente</i> da Etapa 2 — o de pior QoE: um fluxo UDP de 8 Mbps
+(txg→rxg), sem controle de congestionamento, ocupa o gargalo de 10 Mbps e
+derruba o bitrate médio do vídeo de 2241 kbps (baseline) para 436 kbps
+(−81%), além de provocar rebuffering. A solução parte da telemetria de portas
+que o controlador já coletava nas etapas anteriores.</p>
+
+<h2>2. Arquitetura do controle</h2>
+<p>O controlador (<code>controller/qoe_controller.py</code>, os-ken /
+OpenFlow 1.3) passa a operar com um pipeline de <b>duas tabelas</b>, mantendo
+intacto o comportamento de learning switch das Etapas 1–2:</p>
+<table>
+<tr><th>Tabela</th><th class="esq">Função</th><th class="esq">Regras</th></tr>
+<tr><td>0</td><td class="esq">classificação / policiamento</td><td class="esq">padrão: <code>GotoTable(1)</code>; a mitigação instala aqui regras de alta prioridade</td></tr>
+<tr><td>1</td><td class="esq">encaminhamento (learning switch L2)</td><td class="esq">regras reativas por <code>(in_port, eth_dst)</code>; table-miss → controlador</td></tr>
+</table>
+<p>A separação em duas tabelas permite policiar fluxos na tabela 0 sem
+reescrever a lógica de encaminhamento: após o policiamento, o pacote segue para
+a tabela 1, que decide a porta de saída normalmente.</p>
+
+<h2>3. Detecção de degradação</h2>
+<p>A cada janela de 5 s, o controlador calcula a vazão de cada porta a partir
+do incremento de <code>tx_bytes</code> entre coletas. O gargalo é considerado
+<b>saturado</b> quando a porta de maior vazão de <code>s1</code> ultrapassa
+<b>85% da capacidade</b> (8,5 Mbps de 10 Mbps). Para não disparar por rajada
+momentânea, exige-se a condição sustentada por <b>2 janelas consecutivas</b>
+(~10 s). Confirmada a saturação, a mitigação é acionada; quando a utilização
+volta a ficar baixa por 2 janelas, a restrição é removida (controle reversível).</p>
+<p>A lógica de detecção/mitigação fica condicionada à variável de ambiente
+<code>QOE_MITIGATION=on</code>, ativada apenas no cenário com controle. Assim,
+os resultados das Etapas 1–2 permanecem reproduzíveis sem alteração.</p>
+
+<h2>4. Mitigação — rate-limit via OpenFlow <i>meter</i></h2>
+<p><b>Classificação dos fluxos:</b> no cenário, o vídeo trafega sobre
+<b>TCP</b> (porta 8080 do servidor) e o tráfego concorrente sobre <b>UDP</b>
+(iperf3). Essa assinatura permite tratar o agressor sem afetar o vídeo. Ao
+detectar saturação, o controlador executa:</p>
+<pre>
+1. cria um meter de rate-limit            OFPMeterMod(ADD, meter_id=1,
+                                            flags=KBPS, band=DROP@2000kbps)
+2. instala na tabela 0 (prioridade 100)   match(eth_type=IPv4, ip_proto=UDP)
+                                            -> Meter(1), GotoTable(1)
+</pre>
+<p>O fluxo UDP fica limitado a 2 Mbps no gargalo; os ~8 Mbps restantes ficam
+disponíveis para o vídeo TCP, que volta a escalar de qualidade. Um modo
+alternativo de <b>descarte</b> (<code>QOE_MODE=drop</code>) derruba o fluxo
+concorrente por completo; o padrão adotado é o rate-limit, menos agressivo e
+mais realista como política de priorização.</p>
+
+<h2>5. Logs de decisão</h2>
+<p>Cada decisão é registrada no <code>controller.log</code> (prefixo
+<code>DECISION</code>) e em <code>results/concorrente_controle/decisions.log</code>,
+atendendo ao requisito de "logs demonstrando decisões em tempo de execução":</p>
+<pre>
+22:16:03  degradacao detectada em dpid=1 porta=3: utilizacao 100% do gargalo
+          (9.96 Mbps) por 2 janelas
+22:16:03  mitigacao: rate-limit do trafego UDP concorrente a 2000 kbps
+          (meter 1, tabela 0) em dpid=1 — prioriza o video TCP no gargalo
+</pre>
+<p>A detecção aponta a porta 3 de <code>s1</code> (uplink s1→s2), que é
+exatamente o enlace gargalo: 100% de utilização sustentada confirma a
+degradação antes de qualquer ação.</p>
+
+<h2 class="quebra">6. Resultados — baseline vs. concorrente vs. controle</h2>
+<p>Média dos três clientes, comparando a referência sem disputa, o cenário
+degradado e o mesmo cenário com o controle SDN ativo:</p>
+<table>
+<tr><th class="esq">condição</th><th>bitrate (kbps)</th><th>startup (s)</th><th>t. parado (s)</th><th>trocas</th><th>RTT durante (ms)</th></tr>
+<tr><td class="esq">baseline (referência)</td><td><b>2241</b></td><td>0,23</td><td>0,00</td><td>1,7</td><td>21,5</td></tr>
+<tr><td class="esq">concorrente (sem controle)</td><td>436</td><td>0,54</td><td>0,30</td><td>3,0</td><td>57,1</td></tr>
+<tr><td class="esq">concorrente (com controle)</td><td><b>1336</b></td><td>0,53</td><td>0,89</td><td>4,0</td><td>44,1</td></tr>
+</table>
+
+<figure>
+<img src="../results/plots/control_qoe.png" alt="métricas de QoE com e sem controle">
+<figcaption>Figura 1 — Métricas de QoE no cenário concorrente: baseline, sem controle e com controle SDN.</figcaption>
+</figure>
+
+<figure>
+<img src="../results/plots/control_timeline.png" alt="bitrate ao longo do tempo">
+<figcaption>Figura 2 — Adaptação de bitrate do cliente c1. Com controle, o cliente
+permanece preso em 300 kbps até ~15 s e, logo após a decisão do controlador,
+escala para 2400 kbps.</figcaption>
+</figure>
+
+<h3>6.1 Análise</h3>
+<p>O controle <b>triplica o bitrate médio reproduzido</b> (436 → 1336 kbps,
+<b>+206%</b>), recuperando cerca de 60% do baseline, e reduz o RTT durante o
+streaming (57 → 44 ms) por aliviar a fila do gargalo. A linha do tempo
+(Figura 2) evidencia o mecanismo em ação: o cliente fica preso na qualidade
+mínima enquanto o UDP domina o enlace e sobe para a qualidade máxima poucos
+segundos após a regra de rate-limit ser programada — a relação causa-efeito
+entre a decisão do controlador e a melhora da QoE fica explícita.</p>
+<p><b>Trade-off.</b> O tempo total de rebuffering sobe ligeiramente
+(0,30 → 0,89 s) e há uma troca de qualidade a mais. O salto abrupto de banda
+disponível, quando a restrição entra em vigor, provoca um breve reajuste do
+buffer em 2 dos 3 clientes. É um efeito transitório, restrito ao instante da
+intervenção, amplamente compensado pela melhora expressiva e sustentada da
+qualidade visual pelo restante da sessão.</p>
+
+<h2>7. Reprodução</h2>
+<pre>
+# dentro do WSL, como root, na raiz do projeto
+sudo make controle   # cenário concorrente_controle + figuras da Etapa 3
+</pre>
+<p>Equivale a executar <code>scripts/run_experiment.py --scenario
+concorrente_controle</code> seguido de <code>plot_results.py</code> e
+<code>plot_control.py</code>. Ambiente testado: Ubuntu 24.04 (WSL2),
+Python 3.12, Mininet 2.3, Open vSwitch 3.3, os-ken 2.8.1.</p>
+
+<h2>8. Declaração de uso de inteligência artificial</h2>
+<p>Durante o desenvolvimento desta etapa foram utilizadas ferramentas de
+inteligência artificial generativa como apoio na estruturação do código do
+controlador (organização do pipeline de tabelas e dos scripts de automação) e
+na análise dos resultados. A definição da lógica de detecção e de mitigação, a
+escolha dos parâmetros, a execução dos experimentos, a validação dos
+resultados e as conclusões são de responsabilidade do autor, que revisou todo
+o conteúdo gerado com auxílio dessas ferramentas.</p>
+
+</body>
+</html>

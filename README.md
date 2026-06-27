@@ -1,9 +1,11 @@
 # Melhoria da QoE em Streaming de Vídeo com Mininet, SDN e P4
 
-Projeto final de Programabilidade de Redes — Etapas 1 e 2.
+Projeto final de Programabilidade de Redes — Etapas 1 a 3.
 
 Detecta e caracteriza degradação de QoE em streaming DASH sobre uma rede
-emulada (Mininet + controlador SDN os-ken/Ryu, OpenFlow 1.3).
+emulada (Mininet + controlador SDN os-ken/Ryu, OpenFlow 1.3) e, na Etapa 3,
+**mitiga** a degradação programando regras OpenFlow dinamicamente no
+controlador (rate-limit do fluxo concorrente via meter).
 
 ## Topologia
 
@@ -61,6 +63,7 @@ make check        # verifica ambiente
 make video        # gera conteúdo DASH (usa vídeo fonte real; fallback sintético)
 make baseline     # Etapa 1 — ambiente estável
 make cenarios     # Etapa 2 — banda, atraso, perda, concorrente
+make controle     # Etapa 3 — concorrente com controle SDN (mitigação)
 make plots        # gráficos em results/plots/
 ```
 
@@ -84,10 +87,20 @@ mn --custom topology/qoe_topo.py --topo qoe --controller remote,port=6653 \
 | perda | 3% de perda de pacotes |
 | concorrente | UDP 8 Mbps (txg→rxg) disputando o gargalo |
 
+## Controle SDN (Etapa 3)
+
+O controlador detecta a saturação do gargalo pela telemetria de portas
+(vazão > 85% da capacidade por 2 janelas) e mitiga programando, na tabela 0
+do pipeline OpenFlow, um rate-limit (meter de 2 Mbps) sobre o tráfego UDP
+concorrente — priorizando o vídeo TCP. As decisões ficam em
+`results/concorrente_controle/decisions.log`. No cenário concorrente o controle
+recupera o bitrate de 436 → 1336 kbps (+206%).
+
 ## Métricas
 
 - **Rede**: RTT/perda (ping antes e durante o streaming), capacidade TCP (iperf3).
 - **QoE**: tempo de início (startup), nº e duração de stalls (rebuffering),
   bitrate médio reproduzido, nº de trocas de qualidade (ABR).
 
-Relatórios: `relatorio/etapa1.md` e `relatorio/etapa2.md`.
+Relatórios: `relatorio/etapa1.md`, `relatorio/etapa2.md` e
+`relatorio/etapa3.md` (Etapa 3 também em `relatorio/relatorio_etapa3.pdf`).

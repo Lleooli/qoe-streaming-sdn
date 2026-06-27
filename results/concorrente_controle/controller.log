@@ -1,0 +1,114 @@
+2 RLock(s) were not greened, to fix this error make sure you run eventlet.monkey_patch() before importing any other modules.
+loading app /mnt/c/Users/leona/Desktop/Projetos/Projeto programabilidade de redes/controller/qoe_controller.py
+loading app os_ken.controller.ofp_handler
+instantiating app /mnt/c/Users/leona/Desktop/Projetos/Projeto programabilidade de redes/controller/qoe_controller.py of QoEController
+controle SDN: mitigation=True mode=meter cap=10Mbps limite=2000kbps
+instantiating app os_ken.controller.ofp_handler of OFPHandler
+switch conectado: dpid=0000000000000001
+switch conectado: dpid=0000000000000002
+stats dpid=1 porta=1 tx_bytes=3070 rx_bytes=732 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=2980 rx_bytes=646 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=1408 rx_bytes=2018 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=3156 rx_bytes=646 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=3070 rx_bytes=732 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=3180 rx_bytes=646 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=3066 rx_bytes=646 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=2018 rx_bytes=1408 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=320785 rx_bytes=4510 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=5080 rx_bytes=1906 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=6082 rx_bytes=320139 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=7774 rx_bytes=382589 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=5170 rx_bytes=1992 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=5280 rx_bytes=1906 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=5166 rx_bytes=1906 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=320139 rx_bytes=6082 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6322294 rx_bytes=11073 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=5640 rx_bytes=2116 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=12771 rx_bytes=6321704 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=14547 rx_bytes=6384484 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=5660 rx_bytes=2272 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=5840 rx_bytes=2116 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=5656 rx_bytes=2186 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6321704 rx_bytes=12771 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6415023 rx_bytes=814721 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6300 rx_bytes=4052706 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=4770009 rx_bytes=6414883 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=289407 rx_bytes=6394217 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=240961 rx_bytes=10948 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=281787 rx_bytes=10632 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=3977416 rx_bytes=2706 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6414883 rx_bytes=4770009 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6444889 rx_bytes=1878829 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6300 rx_bytes=9200656 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=10979415 rx_bytes=6444749 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=644875 rx_bytes=6404963 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=595441 rx_bytes=20302 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=639237 rx_bytes=20464 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=9122386 rx_bytes=2706 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6444815 rx_bytes=10982377 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6476737 rx_bytes=2940841 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6370 rx_bytes=14348606 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=17206995 rx_bytes=6476597 tx_drop=0 rx_drop=0
+DECISION degradacao detectada em dpid=1 porta=3: utilizacao 100% do gargalo (9.96 Mbps) por 2 janelas
+DECISION mitigacao: rate-limit do trafego UDP concorrente a 2000 kbps (meter 1, tabela 0) em dpid=1 — prioriza o video TCP no gargalo
+stats dpid=2 porta=1 tx_bytes=1000605 rx_bytes=6416187 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=943697 rx_bytes=30550 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=994319 rx_bytes=30774 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=14288356 rx_bytes=2706 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6476597 rx_bytes=17206995 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6504769 rx_bytes=5156617 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6790 rx_bytes=19493646 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=20842963 rx_bytes=6504489 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=1820761 rx_bytes=6428521 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=1352117 rx_bytes=36660 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=1856071 rx_bytes=40082 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=15835326 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6504489 rx_bytes=20842963 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6547969 rx_bytes=9265519 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6790 rx_bytes=24643086 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=26391739 rx_bytes=6547689 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=3169101 rx_bytes=6444713 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=2972283 rx_bytes=59280 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=3141531 rx_bytes=44470 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=17130136 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6547689 rx_bytes=26391739 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6584519 rx_bytes=12892639 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6790 rx_bytes=29791036 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=31171143 rx_bytes=6584239 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=4261611 rx_bytes=6461449 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=4098147 rx_bytes=73502 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=4471821 rx_bytes=50062 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=18362366 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6584239 rx_bytes=31172633 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6631679 rx_bytes=17260316 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6790 rx_bytes=34938986 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=36791776 rx_bytes=6631399 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=5881766 rx_bytes=6484967 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=5499428 rx_bytes=92426 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=5823888 rx_bytes=54780 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=19608006 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6631399 rx_bytes=36791776 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6660409 rx_bytes=20623274 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6790 rx_bytes=40088426 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=41338262 rx_bytes=6660129 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=6786348 rx_bytes=6498635 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=6741882 rx_bytes=102226 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=6968758 rx_bytes=60042 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=20862586 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6660129 rx_bytes=41338262 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6753191 rx_bytes=25262342 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=6860 rx_bytes=45234886 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=47369740 rx_bytes=6752911 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=8527255 rx_bytes=6535365 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=8261756 rx_bytes=131978 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=8476127 rx_bytes=86408 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=22129156 rx_bytes=2776 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6752977 rx_bytes=47372702 tx_drop=0 rx_drop=0
+stats dpid=1 porta=1 tx_bytes=6825129 rx_bytes=29030062 tx_drop=0 rx_drop=0
+stats dpid=1 porta=2 tx_bytes=7070 rx_bytes=50381346 tx_drop=0 rx_drop=0
+stats dpid=1 porta=3 tx_bytes=52366266 rx_bytes=6824779 tx_drop=0 rx_drop=0
+stats dpid=2 porta=1 tx_bytes=9372028 rx_bytes=6554873 tx_drop=0 rx_drop=0
+stats dpid=2 porta=2 tx_bytes=9801984 rx_bytes=157222 tx_drop=0 rx_drop=0
+stats dpid=2 porta=3 tx_bytes=9846990 rx_bytes=113318 tx_drop=0 rx_drop=0
+stats dpid=2 porta=4 tx_bytes=23367486 rx_bytes=2846 tx_drop=0 rx_drop=0
+stats dpid=2 porta=5 tx_bytes=6824779 rx_bytes=52366266 tx_drop=0 rx_drop=0

@@ -1,0 +1,24 @@
+{
+ "scenario": "concorrente_controle",
+ "params": {
+  "bw": 10,
+  "cross": "8M",
+  "mitigation": true
+ },
+ "pre": {
+  "loss_pct": 0.0,
+  "rtt_ms": {
+   "min": 0.058,
+   "avg": 0.071,
+   "max": 0.113,
+   "mdev": 0.014
+  },
+  "throughput_mbps": 9.639
+ },
+ "during": {
+  "rtt_avg_ms": 44.13,
+  "rtt_max_ms": 180.0,
+  "ping_loss_pct": 0.0,
+  "samples": 103
+ }
+}

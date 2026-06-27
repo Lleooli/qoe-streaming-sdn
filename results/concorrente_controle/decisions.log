@@ -1,0 +1,2 @@
+22:16:03  degradacao detectada em dpid=1 porta=3: utilizacao 100% do gargalo (9.96 Mbps) por 2 janelas
+22:16:03  mitigacao: rate-limit do trafego UDP concorrente a 2000 kbps (meter 1, tabela 0) em dpid=1 — prioriza o video TCP no gargalo

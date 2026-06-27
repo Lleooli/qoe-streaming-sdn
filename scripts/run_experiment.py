@@ -50,6 +50,9 @@ SCENARIOS = {
     'atraso':      {'bw': 10, 'delay': '50ms', 'jitter': '20ms'},
     'perda':       {'bw': 10, 'loss': 3},
     'concorrente': {'bw': 10, 'cross': '8M'},
+    # Etapa 3: mesmo cenario concorrente, com deteccao + mitigacao no
+    # controlador SDN (rate-limit do fluxo UDP via OpenFlow meter).
+    'concorrente_controle': {'bw': 10, 'cross': '8M', 'mitigation': True},
 }
 
 
@@ -66,12 +69,16 @@ def wait_port(port, host='127.0.0.1', timeout=15):
     return False
 
 
-def start_controller(logdir):
+def start_controller(logdir, mitigation=False):
     log = open(os.path.join(logdir, 'controller.log'), 'w')
+    env = dict(os.environ)
+    if mitigation:
+        env['QOE_MITIGATION'] = 'on'
+        env['QOE_DECISION_LOG'] = os.path.join(logdir, 'decisions.log')
     proc = subprocess.Popen(
         ['osken-manager', CONTROLLER_APP,
          '--ofp-tcp-listen-port', '6653'],
-        stdout=log, stderr=subprocess.STDOUT)
+        stdout=log, stderr=subprocess.STDOUT, env=env)
     if not wait_port(6653):
         proc.terminate()
         raise RuntimeError('controlador nao abriu porta 6653')
@@ -161,7 +168,7 @@ def run_scenario(name, params, duration):
     print(f'=== Cenario: {name} {params} ===')
 
     cleanup()
-    ctl = start_controller(outdir)
+    ctl = start_controller(outdir, mitigation=params.get('mitigation', False))
     net = None
     try:
         net = build_net(params)

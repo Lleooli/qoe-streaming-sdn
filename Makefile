@@ -5,10 +5,10 @@
 SHELL := /bin/bash
 PY := python3
 
-.PHONY: help setup check video baseline cenarios all plots clean mn-clean
+.PHONY: help setup check video baseline cenarios controle all plots clean mn-clean
 
 help:
-	@echo "Alvos: setup check video baseline cenarios all plots clean mn-clean"
+	@echo "Alvos: setup check video baseline cenarios controle all plots clean mn-clean"
 
 setup:            ## instala dependencias (apt)
 	apt-get update -qq
@@ -31,12 +31,19 @@ cenarios:         ## Etapa 2: cenarios adversos
 	$(PY) scripts/run_experiment.py --scenario perda
 	$(PY) scripts/run_experiment.py --scenario concorrente
 
+controle:         ## Etapa 3: cenario concorrente com controle SDN (mitigacao)
+	$(PY) scripts/run_experiment.py --scenario concorrente_controle
+	$(PY) scripts/plot_results.py
+	$(PY) scripts/plot_control.py
+
 all:              ## todos os cenarios + graficos
 	$(PY) scripts/run_experiment.py --all
 	$(PY) scripts/plot_results.py
+	$(PY) scripts/plot_control.py
 
 plots:            ## gera graficos e tabela consolidada
 	$(PY) scripts/plot_results.py
+	$(PY) scripts/plot_control.py
 
 clean:            ## remove resultados
 	rm -rf results/

@@ -22,9 +22,11 @@ import matplotlib.pyplot as plt
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 RESULTS = os.path.join(ROOT, 'results')
 PLOTS = os.path.join(RESULTS, 'plots')
-ORDER = ['baseline', 'banda', 'atraso', 'perda', 'concorrente']
+ORDER = ['baseline', 'banda', 'atraso', 'perda', 'concorrente',
+         'concorrente_controle']
 COLOR = {'baseline': '#4c9f70', 'banda': '#d1495b', 'atraso': '#edae49',
-         'perda': '#00798c', 'concorrente': '#6a4c93'}
+         'perda': '#00798c', 'concorrente': '#6a4c93',
+         'concorrente_controle': '#2a9d8f'}
 
 
 def load():
